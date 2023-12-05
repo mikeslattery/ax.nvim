@@ -62,6 +62,4 @@ describe('ax.nvim', function()
 
     assert(vim.fn.filereadable(temp_file_path) == 0, "Temporary file not must exist")
   end)
-  -- TODO: push
-  -- TODO: automate test generation
 end)

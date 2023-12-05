@@ -3,8 +3,6 @@ local fn = vim.fn
 
 local M = {}
 
--- FIXME: get rid of redir
-
 -- Configuration options, with defaults
 local config = {}
 
@@ -92,7 +90,6 @@ end
 function M.setup(setup_config)
   setup_config = setup_config or {}
   M.config(setup_config)
-  -- FIXME: args
   vim.api.nvim_create_user_command('Ax', function(args)
     M.ax()
   end, { nargs = "*" })
