@@ -18,17 +18,25 @@ PROMPT = "\
 
 all: test/.last README.md
 
-.PHONY: all test manual helptags continous helpdoc
+.PHONY: all test ci manual helptags continous helpdoc
 
 # Test target
 test: test/.last
 
 test/.last: test/*.lua test/plenary/* lua/$(NAME)/* Makefile
-	@$(NVIM) \
+	@set -eo pipefail; \
+		$(NVIM) \
 		--headless \
 		-c "PlenaryBustedDirectory $(TEST_DIR)/ {minimal_init = '$(PLUGINS_DIR)/minimal_init.vim'}" \
-		-c "qa!"
-	@touch test/.last
+		| tee test/.last
+
+ci:
+	@set -eo pipefail; \
+		$(NVIM) \
+		--headless \
+		-c "PlenaryBustedDirectory $(TEST_DIR)/ {minimal_init = '$(PLUGINS_DIR)/minimal_init.vim', sequential = true}" \
+		2>&1 \
+    | sed 's/\x1b\[[0-9;]*m//g'
 
 manual:
 	@$(NVIM) \
