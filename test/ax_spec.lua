@@ -46,20 +46,20 @@ describe('ax.nvim', function()
     assert( ax.is_git_managed ('Makefile') , "Git managed" )
   end)
 
-  it('regular delete_file', function()
+  it('regular remove_file', function()
     -- given
     os.execute('touch normal_file.txt')
     -- sanity check
     assert( not ax.is_git_managed ('normal_file.txt'))
 
     -- when
-    ax.delete_file('normal_file.txt')
+    ax.remove_file('normal_file.txt')
 
     -- then
     assert(vim.fn.filereadable('normal_file.txt') == 0, "Temporary file must not exist")
   end)
 
-  it('git delete_file', function()
+  it('git remove_file', function()
     -- given
     os.execute('touch git_file.txt')
     os.execute('git add git_file.txt')
@@ -67,7 +67,7 @@ describe('ax.nvim', function()
     assert( ax.is_git_managed ('git_file.txt'))
 
     -- when
-    ax.delete_file('git_file.txt')
+    ax.remove_file('git_file.txt')
 
     -- then
     assert( not ax.is_git_managed ('git_file.txt'))

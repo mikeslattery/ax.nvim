@@ -2,15 +2,35 @@
 
 ## Misc Ideas
 
-* `AxAudit[!]` - Generate vimscript of `:Ax` commands for missing oldfiles
+* Unit test: audit, move
+* `AxAudit!` - Run immediately.
 * `Ax [<path>]` - Specify path
-* `AxMove [<oldpath>] <newpath>` - Move file location
+* `ax([file])` `ax_move([f1,] f2)` - document
 
-## Issues
+## Code snippets
 
-* Normalize full paths if necessary: `vim.fn.namemodify(path, ':p:p')`
 
-### Problematic code
+```lua
+-- TODO: find all paths in oldfiles that do not exist on disk and return as table.
+```
+
+```lua
+  vim.api.nvim_create_user_command('AxMove', function(args)
+    M.ax_move(args.fargs[1], args.fargs[2])
+  -- end, { nargs = 2 })
+  end, { nargs = "*" })
+```
+
+## Announce
+
+When we have audit and move.
+
+# Issues
+
+* Audit isn't finding files
+* Is it inefficient and unnecessary to normalize to full paths with `paths_same()`?
+
+## Problematic code
 
 Consider testings a project-local file
 
