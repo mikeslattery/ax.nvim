@@ -5,7 +5,7 @@ NAME = ax
 NVIM = nvim
 TEST_DIR = ./test
 PLUGINS_DIR = ./test/plenary
-MODEL = gpt-4-1106-preview
+MODEL = gpt-4
 PROMPT = "\
 	INSTRUCTION:\
 	Convert the above vim plugin help file to direct *raw* markdown.\

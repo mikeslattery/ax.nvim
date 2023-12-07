@@ -27,7 +27,7 @@ When we have audit and move.
 
 # Issues
 
-* Audit isn't finding files
+AxAudit isn't finding files
 * Is it inefficient and unnecessary to normalize to full paths with `paths_same()`?
 
 ## Problematic code

@@ -290,7 +290,7 @@ function M.setup(setup_config)
     end
   end, { nargs = "*" })
 
-  vim.api.nvim_create_user_command('Audit', function(args)
+  vim.api.nvim_create_user_command('AxAudit', function(args)
     M.audit()
   end, { nargs = "*" })
   return M

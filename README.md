@@ -1,41 +1,72 @@
-# AX PLUGIN
+ax.nvim is a plugin that aims to manage buffers and files in Neovim. It eases the file and buffer manipulation process in Neovim by providing a series of commands and functions, abstracting user from writing specific Neovim functions.
 
-Ax is a Neovim plugin that provides a convenient way to delete files, cleansing them from various Neovim data structures such as oldfiles, jumplists, quickfix lists, and more.
+---
 
-## INSTALLATION
+# INSTALLATION
 
-The plugin can be installed using vim-plug or lazy.nvim package managers.
+Using vim-plug:
 
-### For vim-plug:
-
-1. Add the following line to your vimrc within the plug block:
-
-```
+```vim
 Plug 'mikeslattery/ax.nvim'
 ```
 
-2. Then, run `:PlugInstall` in Neovim to install the plugin.
+Using lazy.nvim:
 
-### For lazy.nvim package manager:
+```lua
+{
+    "mikeslattery/ax.nvim"
+}
+```
 
-Include Ax in your configuration like this:
+---
 
-    {
-      "mikeslattery/ax.nvim",
-    }
+# COMMANDS
 
-Refer to the lazy.nvim documentation for more details on using this package manager.
+## AX
 
-## USAGE
+Ax is a primary command of the ax.nvim plugin and is used to remove a file from the disk and also from various vim lists. It modifies global variables: oldfiles, jumplist and changelist.
 
-After installing ax, you can use the provided `:Ax` command to delete the current buffer's associated file and cleanse its references from Neovim's data structures.
+Usage:
 
-For more details on configuration and usage, please refer to the repository README at [https://github.com/mikeslattery/ax.nvim](https://github.com/mikeslattery/ax.nvim).
+```vim
+:Ax
+```
 
-## LICENSE
+## AxMove
 
-Ax is distributed under the MIT License. For more details, see the LICENSE file in the repository.
+AxMove is used to move a file to a new location. It also updates various vim lists to reflect the new location of the file.
 
-## COPYRIGHT
+Usage:
 
-Copyright (c) 2023 Michael Slattery. All rights reserved.
+```vim
+:AxMove {source} {destination}
+:AxMove % {destination}
+```
+
+## AxAudit
+
+AxAudit is used to generate a report that lists paths remembered by vim, but no longer exist. It also provides script to clear them.
+
+Usage:
+
+```vim
+:AxAudit
+```
+
+---
+
+# MAPPING
+
+Example mappings:
+
+```vim
+nmap <Leader>ax :Ax<CR>
+nmap <Leader>am :AxMove %<space>
+nmap <Leader>aa :AxAudit<CR>
+```
+
+---
+
+# COPYRIGHT
+
+© 2023 Mike Slattery. Distributed under the MIT license.

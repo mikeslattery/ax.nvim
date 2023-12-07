@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-MODEL='gpt-4-1106-preview'
+MODEL='gpt-4'
 USERNAME='mikeslattery'
 NAME="$1"
 
