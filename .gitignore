@@ -1,2 +1,4 @@
 test/.last
+test/main.shada
+test/Session.vim
 .env
