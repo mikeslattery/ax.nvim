@@ -21,7 +21,7 @@ Plug 'mikeslattery/ax.nvim'
 Include Ax in your configuration like this:
 
     {
-      "mikeslattery/genie",
+      "mikeslattery/ax.nvim",
     }
 
 Refer to the lazy.nvim documentation for more details on using this package manager.
