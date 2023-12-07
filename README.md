@@ -30,6 +30,7 @@ Usage:
 
 ```vim
 :Ax
+:Ax {path}
 ```
 
 ## AxMove

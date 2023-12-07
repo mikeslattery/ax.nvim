@@ -252,9 +252,12 @@ local function remove_current_buffer()
   api.nvim_buf_delete(buffer_reference, {force = true})
 end
 
-function M.ax()
-  local file = api.nvim_buf_get_name(0)
-  remove_current_buffer()
+function M.ax(file)
+  -- If no file, then apply to current buffer
+  if not file then
+    file = api.nvim_buf_get_name(0)
+    remove_current_buffer()
+  end
   remove_file(file)
   remove_from_oldfiles(file)
   remove_from_jumplist(file)
@@ -279,7 +282,11 @@ function M.setup(setup_config)
   setup_config = setup_config or {}
   M.config(setup_config)
   vim.api.nvim_create_user_command('Ax', function(args)
-    M.ax()
+    if #args.fargs >= 1 then
+      M.ax(args.fargs[1])
+    else
+      M.ax()
+    end
   end, { nargs = "*" })
   
   vim.api.nvim_create_user_command('AxMove', function(args)
