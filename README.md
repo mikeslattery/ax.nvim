@@ -18,35 +18,19 @@ Plug 'mikeslattery/ax.nvim'
 
 ### For lazy.nvim package manager:
 
-1. Add this within your lazy.nvim configuration Lua table:
+Include Ax in your configuration like this:
 
-```lua
-{
-  dir = "~/path/to/ax.nvim",
-  setup = function() require("ax").setup() end,
-  config = function() require("ax").config({/* your config */}) end,
-}
-```
+    {
+      "mikeslattery/genie",
+    }
 
-The `dir` field should be the path to the locally cloned repository or can be omitted to fetch automatically from GitHub.
-
-2. Follow the setup instructions of lazy.nvim to complete the installation.
+Refer to the lazy.nvim documentation for more details on using this package manager.
 
 ## USAGE
 
 After installing ax, you can use the provided `:Ax` command to delete the current buffer's associated file and cleanse its references from Neovim's data structures.
 
 For more details on configuration and usage, please refer to the repository README at [https://github.com/mikeslattery/ax.nvim](https://github.com/mikeslattery/ax.nvim).
-
-## CONFIGURATION
-
-Ax doesn't require explicit configuration, but it can be customized if needed through the setup function. Example:
-
-```lua
-lua require('ax').setup({
-  -- your configuration here
-})
-```
 
 ## LICENSE
 
