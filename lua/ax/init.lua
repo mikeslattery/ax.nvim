@@ -12,8 +12,14 @@ function M.config(user_config)
   return config
 end
 
-function is_git_managed(file)
+local function is_git_managed(file)
   return os.execute('git ls-files --error-unmatch ' .. file .. ' > /dev/null 2>&1') == 0
+end
+
+-- TODO: Write a unit test in ax_spec for this function
+local function paths_same(path1, path2)
+  -- Using ':p' twice is redundant, as it already expands to the full path
+  return vim.fn.fnamemodify(path1, ':p') == vim.fn.fnamemodify(path2, ':p') 
 end
 
 local function delete_file(file)
@@ -27,7 +33,7 @@ end
 local function remove_from_oldfiles(file)
   local oldfiles = v.oldfiles
   for i, oldfile in ipairs(oldfiles) do
-    if oldfile == file then
+    if paths_same(oldfile, file) then
       table.remove(oldfiles, i)
       vim.cmd('call remove(v:oldfiles, ' .. (i - 1) .. ')')
       break
@@ -38,7 +44,7 @@ end
 local function remove_from_jumplist(file)
   local jumplist = fn.getjumplist()[1]
   for i, jump in ipairs(jumplist) do
-    if jump.file == file then
+    if paths_same(jump.file, file) then
       table.remove(jumplist, i)
       vim.cmd('call remove(getjumplist()[1], ' .. (i - 1) .. ')')
     end
@@ -48,7 +54,7 @@ end
 local function remove_from_changelist(file)
   local changelist = fn.getchangelist()[1]
   for i, change in ipairs(changelist) do
-    if change.filename == file then
+    if paths_same(change.filename, file) then
       vim.cmd('call remove(getchangelist()[1], ' .. (i - 1) .. ')')
     end
   end
@@ -57,7 +63,7 @@ end
 local function remove_global_marks(file)
   local marks = fn.getmarklist()
   for i, mark in ipairs(marks) do
-    if mark.file == file then
+    if paths_same(mark.file, file) then
       api.nvim_del_mark(string.sub(mark.mark, -1))
     end
   end
@@ -66,7 +72,7 @@ end
 local function remove_from_quickfix(file)
   local quickfix = fn.getqflist()
   for i, item in ipairs(quickfix) do
-    if item.filename == file then
+    if paths_same(item.filename, file) then
       table.remove(quickfix, i)
     end
   end
@@ -77,7 +83,7 @@ local function remove_from_loclist(file)
   local current_win = vim.api.nvim_get_current_win()
   local loclist = fn.getloclist(current_win)
   for i, item in ipairs(loclist) do
-    if item.filename == file then
+    if paths_same(item.filename, file) then
       table.remove(loclist, i)
     end
   end
@@ -109,6 +115,7 @@ end
 -- Do not include in documentation.
 function M.leak()
   M.is_git_managed = is_git_managed
+  M.paths_same = paths_same
   M.delete_file = delete_file
   M.remove_from_oldfiles = remove_from_oldfiles
   M.remove_from_jumplist = remove_from_jumplist

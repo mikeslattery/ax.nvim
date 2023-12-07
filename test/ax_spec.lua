@@ -15,9 +15,8 @@ describe('ax.nvim', function()
     ax.setup({})
 
     -- open a new buffer with a new temporary file and save it.
-    vim.cmd('enew')
     temp_file_path = vim.fn.tempname()
-    vim.cmd('edit ' .. temp_file_path)
+    vim.cmd('edit! ' .. temp_file_path)
     buffer_reference = vim.api.nvim_get_current_buf()
     -- append a single line to the buffer
     vim.api.nvim_buf_set_lines(0, -1, -1, false, {"Test line"})
@@ -33,6 +32,14 @@ describe('ax.nvim', function()
   it('sanity', function()
     assert.are.same( buffer_reference, vim.api.nvim_get_current_buf())
     assert(vim.fn.filereadable(temp_file_path) == 1, "Temporary file must exist")
+  end)
+
+  it('paths_same', function()
+    local path1 = temp_file_path
+    local path2 = vim.fn.fnamemodify(temp_file_path, ':p') -- Get the full path
+    assert(ax.paths_same(path1, path2), "Paths should be the same")
+    local different_path = vim.fn.tempname()
+    assert(not ax.paths_same(path1, different_path), "Paths should not be the same")
   end)
 
   it('is_git_managed', function()
