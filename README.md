@@ -13,14 +13,14 @@ Plug 'mikeslattery/ax.nvim'
 Using lazy.nvim:
 
 ```lua
-{ "mikeslattery/ax.nvim", cmd = { "Ax", "AxMove", "AxAudit" } }
+{ "mikeslattery/ax.nvim", cmd = { "Ax", "AxForget", "AxMove", "AxAudit" } }
 ```
 
 ---
 
 # COMMANDS
 
-## AX
+## Ax
 
 Ax is a primary command of the ax.nvim plugin and is used to remove a file from the disk and also from various vim lists. It modifies global variables: oldfiles, jumplist and changelist.
 
@@ -29,6 +29,16 @@ Usage:
 ```vim
 :Ax
 :Ax {path}
+```
+
+## AxForget
+
+Identical to Ax, but it won't delete an existing file.
+
+Usage:
+
+```vim
+:AxForget {path}
 ```
 
 ## AxMove

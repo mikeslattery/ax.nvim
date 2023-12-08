@@ -33,7 +33,7 @@ Plug 'mikeslattery/ax.nvim'
 Using lazy.nvim:
 
 ```lua
-{ "mikeslattery/ax.nvim", cmd = { "Ax", "AxMove", "AxAudit" } }
+{ "mikeslattery/ax.nvim", cmd = { "Ax", "AxForget", "AxMove", "AxAudit" } }
 ```
 
 ==============================================================================
@@ -52,6 +52,17 @@ Usage:
 ```vim
 :Ax
 :Ax {path}
+```
+
+==============================================================================
+AxForget                                                     *ax.nvim-ax-forget-command*
+
+Identical to Ax, but it won't delete an existing file.
+
+Usage:
+
+```vim
+:AxForget {path}
 ```
 
 ==============================================================================
