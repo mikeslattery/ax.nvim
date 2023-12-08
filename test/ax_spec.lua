@@ -1,5 +1,6 @@
 local ax = require('ax')
 
+
 describe('ax.nvim', function()
   -- This test is run by plenary and make
 
@@ -139,5 +140,59 @@ describe('ax.nvim', function()
     for _, item in ipairs(quickfix) do
       assert(item.filename ~= temp_file_path, "File should be removed from quickfix")
     end
+  end)
+
+  it('remove_from_oldfiles', function()
+    -- given
+    vim.v.oldfiles = {temp_file_path, "another_file.txt"}
+
+    -- when
+    ax.remove_from_oldfiles(temp_file_path)
+
+    -- then
+    assert(not vim.tbl_contains(vim.v.oldfiles, temp_file_path), "File should be removed from oldfiles")
+  end)
+
+  it('remove_local_marks', function()
+    -- given
+    vim.api.nvim_buf_set_lines(buffer_reference, -1, -1, false, {"Another test line"})
+    vim.api.nvim_buf_set_mark(buffer_reference, 'a', 1, 0, {}) -- Set local mark 'a'
+
+    -- when
+    ax.remove_local_marks(temp_file_path)
+
+    -- then
+    local marks = vim.fn.getmarklist(buffer_reference)
+    for _, mark in ipairs(marks) do
+      assert(mark.mark ~= 'a', "Local mark 'a' should be removed")
+    end
+  end)
+
+  it('remove_from_loclist', function()
+    -- given
+    local current_win = vim.api.nvim_get_current_win()
+    vim.fn.setloclist(current_win, {{filename = temp_file_path, lnum = 1, col = 1, text = "Test loclist entry"}}) -- Add loclist entry that references file temp_file_path
+
+    -- when
+    ax.remove_from_loclist(temp_file_path)
+
+    -- then
+    local loclist = vim.fn.getloclist(current_win)
+    for _, item in ipairs(loclist) do
+      assert(item.filename ~= temp_file_path, "File should be removed from loclist")
+    end
+  end)
+
+  it('move_from_oldfiles', function()
+    -- given
+    local new_file_path = vim.fn.tempname()
+    vim.v.oldfiles = {temp_file_path, "another_file.txt"}
+
+    -- when
+    ax.move_from_oldfiles(temp_file_path, new_file_path)
+
+    -- then
+    assert(not vim.tbl_contains(vim.v.oldfiles, temp_file_path), "Old file path should be removed from oldfiles")
+    assert(vim.tbl_contains(vim.v.oldfiles, new_file_path), "New file path should be added to oldfiles")
   end)
 end)
