@@ -93,7 +93,6 @@ function M.audit()
   table.insert(lines_to_write, 'Ax ' .. temp_file)
   table.insert(lines_to_write, '')
   table.insert(lines_to_write, 'wshada!')
-  table.insert(lines_to_write, 'rshada!')
 
   if shada_file then
     table.insert(lines_to_write, '')
@@ -164,40 +163,52 @@ local function move_from_oldfiles(oldfile, newfile)
 end
 
 local function remove_from_jumplist(file)
-  local jumplist = fn.getjumplist()[1]
-  for i, jump in ipairs(jumplist) do
-    if paths_same(jump.file, file) then
-      table.remove(jumplist, i)
-      vim.cmd('call remove(getjumplist()[1], ' .. (i - 1) .. ')')
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    vim.api.nvim_set_current_win(win)
+    local jumplist = fn.getjumplist()[1]
+    for i, jump in ipairs(jumplist) do
+      if paths_same(jump.file, file) then
+        table.remove(jumplist, i)
+        vim.cmd('call remove(getjumplist()[1], ' .. (i - 1) .. ')')
+      end
     end
   end
 end
 
 local function move_from_jumplist(oldfile, newfile)
-  local jumplist = fn.getjumplist()[1]
-  for i, jump in ipairs(jumplist) do
-    if paths_same(jump.file, oldfile) then
-      jumplist[i].file = newfile
-      vim.cmd('let getjumplist()[1][' .. (i - 1) .. '].file = ' .. vim.fn.fnameescape(newfile))
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    vim.api.nvim_set_current_win(win)
+    local jumplist = fn.getjumplist()[1]
+    for i, jump in ipairs(jumplist) do
+      if paths_same(jump.file, oldfile) then
+        jumplist[i].file = newfile
+        vim.cmd('let getjumplist()[1][' .. (i - 1) .. '].file = ' .. vim.fn.fnameescape(newfile))
+      end
     end
   end
 end
 
 local function remove_from_changelist(file)
-  local changelist = fn.getchangelist()[1]
-  for i, change in ipairs(changelist) do
-    if paths_same(change.filename, file) then
-      vim.cmd('call remove(getchangelist()[1], ' .. (i - 1) .. ')')
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    vim.api.nvim_set_current_win(win)
+    local changelist = fn.getchangelist()[1]
+    for i, change in ipairs(changelist) do
+      if paths_same(change.filename, file) then
+        vim.cmd('call remove(getchangelist()[1], ' .. (i - 1) .. ')')
+      end
     end
   end
 end
 
 local function move_from_changelist(oldfile, newfile)
-  local changelist = fn.getchangelist()[1]
-  for i, change in ipairs(changelist) do
-    if paths_same(change.filename, oldfile) then
-      changelist[i].filename = newfile
-      vim.cmd('let getchangelist()[1][' .. (i - 1) .. '].filename = ' .. vim.fn.fnameescape(newfile))
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    vim.api.nvim_set_current_win(win)
+    local changelist = fn.getchangelist()[1]
+    for i, change in ipairs(changelist) do
+      if paths_same(change.filename, oldfile) then
+        changelist[i].filename = newfile
+        vim.cmd('let getchangelist()[1][' .. (i - 1) .. '].filename = ' .. vim.fn.fnameescape(newfile))
+      end
     end
   end
 end
@@ -231,8 +242,6 @@ local function remove_local_marks(file)
       api.nvim_buf_del_mark(bufnr, string.sub(mark.mark, -1))
     end
   end
-
-  vim.api.nvim_buf_delete(bufnr, {force = true})
 end
 
 local function move_global_marks(oldfile, newfile)
@@ -268,25 +277,35 @@ local function move_from_quickfix(oldfile, newfile)
 end
 
 local function remove_from_loclist(file)
-  local current_win = vim.api.nvim_get_current_win()
-  local loclist = fn.getloclist(current_win)
-  for i, item in ipairs(loclist) do
-    if paths_same(item.filename, file) then
-      table.remove(loclist, i)
+  local tabs = vim.api.nvim_list_tabpages()
+  for _, tab in ipairs(tabs) do
+    local windows = vim.api.nvim_tabpage_list_wins(tab)
+    for _, win in ipairs(windows) do
+      local loclist = fn.getloclist(win)
+      for i, item in ipairs(loclist) do
+        if paths_same(item.filename, file) then
+          table.remove(loclist, i)
+        end
+      end
+      fn.setloclist(win, loclist)
     end
   end
-  fn.setloclist(current_win, loclist)
 end
 
 local function move_from_loclist(oldfile, newfile)
-  local current_win = vim.api.nvim_get_current_win()
-  local loclist = fn.getloclist(current_win)
-  for i, item in ipairs(loclist) do
-    if paths_same(item.filename, oldfile) then
-      loclist[i].filename = newfile
+  local tabs = vim.api.nvim_list_tabpages()
+  for _, tab in ipairs(tabs) do
+    local windows = vim.api.nvim_tabpage_list_wins(tab)
+    for _, win in ipairs(windows) do
+      local loclist = fn.getloclist(win)
+      for i, item in ipairs(loclist) do
+        if paths_same(item.filename, oldfile) then
+          loclist[i].filename = newfile
+        end
+      end
+      fn.setloclist(win, loclist)
     end
   end
-  fn.setloclist(current_win, loclist)
 end
 
 local function remove_current_buffer()
@@ -294,10 +313,18 @@ local function remove_current_buffer()
   if #vim.api.nvim_tabpage_list_wins(0) > 1 then
     vim.cmd('bn')
   end
+  -- FIXME: this emits output, and slows things down
   api.nvim_buf_delete(buffer_reference, {force = true})
 end
 
 function M.ax(file)
+  local file = M.ax_forget(file)
+  remove_file(file)
+  return file
+end
+
+-- Forget the file, but don't delete it
+function M.ax_forget(file)
   -- If no file, then apply to current buffer
   if not file then
     file = api.nvim_buf_get_name(0)
@@ -305,7 +332,6 @@ function M.ax(file)
   else
     unload_file(file)
   end
-  remove_file(file)
   remove_from_oldfiles(file)
   remove_from_jumplist(file)
   remove_from_changelist(file)
@@ -313,6 +339,7 @@ function M.ax(file)
   remove_local_marks(file)
   remove_from_quickfix(file)
   remove_from_loclist(file)
+  return file
 end
 
 function M.ax_move(oldfile, newfile)
@@ -338,6 +365,14 @@ function M.setup(setup_config)
     end
   end, { nargs = "*" })
   
+  vim.api.nvim_create_user_command('AxForget', function(args)
+    if #args.fargs >= 1 then
+      M.ax_forget(args.fargs[1])
+    else
+      M.ax_forget()
+    end
+  end, { nargs = "*" })
+
   vim.api.nvim_create_user_command('AxMove', function(args)
     if #args.fargs == 2 then
       M.ax_move(args.fargs[1], args.fargs[2])
@@ -365,7 +400,7 @@ function M.leak()
   M.remove_global_marks = remove_global_marks
   M.remove_local_marks = remove_local_marks
   M.remove_from_quickfix = remove_from_quickfix
-  M.remove_from_loclist = remove_from_quickfix
+  M.remove_from_loclist = remove_from_loclist
   M.move_file = move_file
   M.move_from_oldfiles = move_from_oldfiles
   M.move_from_jumplist = move_from_jumplist
