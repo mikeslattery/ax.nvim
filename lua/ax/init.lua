@@ -157,7 +157,7 @@ local function move_from_oldfiles(oldfile, newfile)
   for i, oldfile_path in ipairs(oldfiles) do
     if paths_same(oldfile_path, oldfile) then
       oldfiles[i] = newfile
-      vim.cmd('let v:oldfiles[' .. (i - 1) .. '] = ' .. vim.fn.fnameescape(newfile))
+      vim.cmd('let v:oldfiles[' .. (i - 1) .. '] = "' .. vim.fn.fnameescape(newfile) .. '"')
       break
     end
   end
@@ -212,9 +212,11 @@ local function remove_global_marks(file)
 end
 
 local function load_file_into_hidden_buffer(filepath)
-  local buf = vim.api.nvim_create_buf(false, false)
-
-  vim.api.nvim_buf_set_name(buf, filepath)
+  local buf = vim.fn.bufnr(filepath)
+  if buf == -1 then
+    buf = vim.api.nvim_create_buf(false, false)
+    vim.api.nvim_buf_set_name(buf, filepath)
+  end
   vim.fn.bufload(buf)
 
   return buf
@@ -225,7 +227,9 @@ local function remove_local_marks(file)
 
   local marks = fn.getmarklist(bufnr)
   for i, mark in ipairs(marks) do
-    api.nvim_buf_del_mark(bufnr, string.sub(mark.mark, -1))
+    if mark.mark ~= "'." then
+      api.nvim_buf_del_mark(bufnr, string.sub(mark.mark, -1))
+    end
   end
 
   vim.api.nvim_buf_delete(bufnr, {force = true})
