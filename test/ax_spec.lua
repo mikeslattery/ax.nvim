@@ -43,7 +43,7 @@ describe('ax.nvim', function()
   end)
 
   it('is_git_managed', function()
-    assert( ax.is_git_managed ('Makefile') , "Git managed" )
+    assert( ax.is_git_managed ('Makefile') , "Makefiles should be Git managed" )
   end)
 
   it('regular remove_file', function()

@@ -13,7 +13,14 @@ function M.config(user_config)
 end
 
 local function is_git_managed(file)
-  return os.execute('git ls-files --error-unmatch ' .. file .. ' > /dev/null 2>&1') == 0
+  local stdout
+  if package.config:sub(1,1) == '\\' then
+    -- This is Windows
+    stdout = 'nul'
+  else
+    stdout = '/dev/null'
+  end
+  return os.execute('git ls-files --error-unmatch ' .. file .. ' > ' .. stdout .. ' 2>&1') == 0
 end
 
 local function paths_same(path1, path2)
@@ -23,8 +30,9 @@ end
 local function missing_files()
   local missing_files = {}
   for _, file in ipairs(v.oldfiles) do
-    if not fn.filereadable(file) then
-      table.insert(missing_files, file)
+    local path = vim.fn.fnamemodify(file, ':p')
+    if fn.filereadable(path) == 0 then
+      table.insert(missing_files, path)
     end
   end
   return missing_files
@@ -62,7 +70,7 @@ local function save_shada_to_backup_file()
 end
 
 function M.audit()
-  local missing_files = M.missing_files()
+  local missing_files = missing_files()
   local temp_file = fn.tempname() .. ".vim"
 
   local lines_to_write = {
@@ -74,17 +82,18 @@ function M.audit()
     ''
   }
 
+  for _, file in ipairs(missing_files) do
+    table.insert(lines_to_write, 'Ax ' .. file)
+  end
   local shada_file
-  if #missing_files == 0 then
-    table.insert(lines_to_write, '" None found')
-  else
-    for _, file in ipairs(missing_files) do
-      table.insert(lines_to_write, 'Ax ' .. file)
-    end
+  if #missing_files > 0 then
     shada_file = save_shada_to_backup_file()
   end
 
-  table.insert(lines_to_write, 'Ax')
+  table.insert(lines_to_write, 'Ax ' .. temp_file)
+  table.insert(lines_to_write, '')
+  table.insert(lines_to_write, 'wshada!')
+  table.insert(lines_to_write, 'rshada!')
 
   if shada_file then
     table.insert(lines_to_write, '')
@@ -95,6 +104,14 @@ function M.audit()
   vim.fn.writefile(lines_to_write, temp_file)
 
   vim.cmd('edit ' .. temp_file)
+end
+
+local function unload_file(file)
+  local bufnr = vim.fn.bufnr(file)
+
+  if bufnr >= 0 then
+    vim.api.nvim_buf_delete(bufnr, {force = true})
+  end
 end
 
 -- Deletes file.
@@ -118,8 +135,9 @@ local function move_file(oldfile, newfile)
 end
 
 local function move_buffer(oldfile, newfile)
-  if paths_same(api.nvim_buf_get_name(0), oldfile) then
-    api.nvim_buf_set_name(0, newfile)
+  local bufnr = vim.fn.bufnr(oldfile)
+  if bufnr >= 0 then
+    api.nvim_buf_set_name(bufnr, newfile)
   end
 end
 
@@ -193,6 +211,26 @@ local function remove_global_marks(file)
   end
 end
 
+local function load_file_into_hidden_buffer(filepath)
+  local buf = vim.api.nvim_create_buf(false, false)
+
+  vim.api.nvim_buf_set_name(buf, filepath)
+  vim.fn.bufload(buf)
+
+  return buf
+end
+
+local function remove_local_marks(file)
+  local bufnr = load_file_into_hidden_buffer(file)
+
+  local marks = fn.getmarklist(bufnr)
+  for i, mark in ipairs(marks) do
+    api.nvim_buf_del_mark(bufnr, string.sub(mark.mark, -1))
+  end
+
+  vim.api.nvim_buf_delete(bufnr, {force = true})
+end
+
 local function move_global_marks(oldfile, newfile)
   local marks = fn.getmarklist()
   for i, mark in ipairs(marks) do
@@ -200,6 +238,9 @@ local function move_global_marks(oldfile, newfile)
       api.nvim_set_mark(string.sub(mark.mark, -1), newfile, mark.pos[1], mark.pos[2])
     end
   end
+end
+
+local function move_local_marks(oldfile, newfile)
 end
 
 local function remove_from_quickfix(file)
@@ -257,23 +298,27 @@ function M.ax(file)
   if not file then
     file = api.nvim_buf_get_name(0)
     remove_current_buffer()
+  else
+    unload_file(file)
   end
   remove_file(file)
   remove_from_oldfiles(file)
   remove_from_jumplist(file)
   remove_from_changelist(file)
   remove_global_marks(file)
+  remove_local_marks(file)
   remove_from_quickfix(file)
   remove_from_loclist(file)
 end
 
 function M.ax_move(oldfile, newfile)
-  remove_file(oldfile)
+  move_file(oldfile, newfile)
   move_buffer(oldfile, newfile)
   move_from_oldfiles(oldfile, newfile)
   move_from_jumplist(oldfile, newfile)
   move_from_changelist(oldfile, newfile)
   move_global_marks(oldfile, newfile)
+  move_local_marks(oldfile, newfile)
   move_from_quickfix(oldfile, newfile)
   move_from_loclist(oldfile, newfile)
 end
@@ -308,17 +353,21 @@ end
 function M.leak()
   M.is_git_managed = is_git_managed
   M.paths_same = paths_same
+  M.unload_file = unload_file
   M.remove_file = remove_file
   M.remove_from_oldfiles = remove_from_oldfiles
   M.remove_from_jumplist = remove_from_jumplist
   M.remove_from_changelist = remove_from_changelist
   M.remove_global_marks = remove_global_marks
+  M.remove_local_marks = remove_local_marks
   M.remove_from_quickfix = remove_from_quickfix
   M.remove_from_loclist = remove_from_quickfix
+  M.move_file = move_file
   M.move_from_oldfiles = move_from_oldfiles
   M.move_from_jumplist = move_from_jumplist
   M.move_from_changelist = move_from_changelist
   M.move_global_marks = move_global_marks
+  M.move_local_marks = move_local_marks
   M.move_from_quickfix = move_from_quickfix
   M.move_from_loclist = move_from_loclist
   M.move_file = move_file
