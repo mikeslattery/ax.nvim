@@ -5,9 +5,12 @@
 
 set -euo pipefail
 
-MODEL='gpt-4'
 USERNAME='mikeslattery'
-NAME="$1"
+NAME="$(ls -1 lua | head -1)"
+
+MODEL="${MODEL:-gpt-4}"
+# We want to have consistent output, since it's git managed
+TEMPERATURE='0'
 
 mdfile() {
   ext="$(echo -n "$1" | sed -E 's/^.*\.([^\.]*)$/\1/;')"
@@ -44,7 +47,9 @@ prompt() {
 }
 
 ai() {
-  openai api chat.completions.create -m "$MODEL" -g user "$(cat)"
+  openai api chat.completions.create \
+    -m "$MODEL" -t "$TEMPERATURE" \
+    -g user "$(cat)"
 }
 
 main() {

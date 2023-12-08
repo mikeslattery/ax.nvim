@@ -57,7 +57,7 @@ helpdoc:
 	@doc/gendoc.sh "$(NAME)"
 
 README.md: doc/$(NAME).txt Makefile
-	@openai api chat.completions.create -m "$(MODEL)" \
+	@openai api chat.completions.create -m "$(MODEL)" -t 0 \
 		-g user "`cat doc/$(NAME).txt` `echo $(PROMPT)`" \
 		> README.md
 

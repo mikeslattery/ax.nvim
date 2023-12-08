@@ -35,13 +35,16 @@ These are sorted least to most insane.
 
 # Issues
 
-* Unit test: move functions
+* Command file autocompletion
+* For jumplist, changelist, loclist, iterate over all windows and tabs
+* Unit test: move functions.  unstash
 * Unit tests "given" state should be inverse of final "then" state
 * Use `saveas!` to move current buffer
 * move local marks
 * For move and Ax <file>, determine if buffer is already loaded
 * Is it inefficient and unnecessary to normalize to full paths with `paths_same()`?
 * Refactor.  `init.lua` is too big.
+* Use reflection to simplify `M.leak()`.  https://www.lua.org/pil/23.1.1.html
 
 ## Problematic code
 
