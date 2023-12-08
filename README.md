@@ -13,9 +13,7 @@ Plug 'mikeslattery/ax.nvim'
 Using lazy.nvim:
 
 ```lua
-{
-    "mikeslattery/ax.nvim"
-}
+{ "mikeslattery/ax.nvim", cmd = { "Ax", "AxMove", "AxAudit" } }
 ```
 
 ---

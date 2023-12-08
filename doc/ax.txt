@@ -1,6 +1,5 @@
 *ax.txt*	Plugin for managing buffers and files in Neovim
 
-Author: Mike Slattery <mslattery@gmail.com>
 License: MIT (same as Neovim); see |license|
 
 ==============================================================================
@@ -34,39 +33,14 @@ Plug 'mikeslattery/ax.nvim'
 Using lazy.nvim:
 
 ```lua
-{
-    "mikeslattery/ax.nvim",
-    lazy = false
-    config = function()
-      require("ax").setup()
-    end
-}
-```
-
-After adding ax to your package list, run:
-
-```vim
-:source $MYVIMRC
-:PlugInstall
-```
-
-For lazy.nvim, run:
-
-```lua
-:Reload
-:PackerInstall
+{ "mikeslattery/ax.nvim", cmd = { "Ax", "AxMove", "AxAudit" } }
 ```
 
 ==============================================================================
-COMMANDS                                                      *ax.nvim-use*
+COMMANDS
 
-The following commands are provided by ax:
 
-|ax.nvim-ax-command|
-|ax.nvim-ax-move-command|
-|ax.nvim-audit-command|
-
-]=============================================================================
+==============================================================================
 AX                                                              *ax.nvim-ax-command*
 
 Ax is a primary command of the ax.nvim plugin and is used to remove a file from
@@ -106,25 +80,14 @@ Usage:
 ```
 
 ==============================================================================
-CONFIG                                                       *ax.nvim-config*
-
-Calls setup with optional configuration table as argument.
-
-Usage:
-
-```lua
-require('ax').setup({config_table})
-```
-
-==============================================================================
                                                                *ax.nvim-mapping*
 
-To map the commands to keys:
+Example mappings:
 
 ```vim
-nmap <Leader>x :Ax<CR>
-nmap <Leader>o :AxMove<CR>
-nmap <Leader>tAxAudit<CR>
+nmap <leader>ax :Ax<CR>
+nmap <leader>am :AxMove %<space>
+nmap <leader>aa :AxAudit<CR>
 ```
 
 ==============================================================================
