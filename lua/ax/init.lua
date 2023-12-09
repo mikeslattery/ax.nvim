@@ -313,7 +313,7 @@ local function remove_current_buffer()
   if #vim.api.nvim_tabpage_list_wins(0) > 1 then
     vim.cmd('bn')
   end
-  -- FIXME: this emits output, and slows things down
+  -- This emits output
   api.nvim_buf_delete(buffer_reference, {force = true})
 end
 
