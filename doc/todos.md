@@ -2,7 +2,7 @@
 
 ## Feature To-Dos and Ideas
 
-No new functionality in the near future, until requested.
+* Missing Functionality section
 
 ## Next Announcement
 
@@ -17,18 +17,20 @@ These are sorted least to most insane.
 None of these are high priority.
 If anyone requests these, I'll move it up to the top of the file.
 
+* Built-in Tree support: neo-tree, nvim-tree, mini.files
+  - See also nvim-lsp-file-operations
 * LSP integration
   - LSP remove/move events notify this plugin.
   - Or, this plugin notifies LSP.
-* Built-in Tree support: neo-tree, nvim-tree
-  - See also nvim-lsp-file-operations
 * Events
   - `Ax[Pre] AxMove[Pre]`
   - See lazy.nvim for example code.  Find `nvim_exec_autocmds`
   - lazy config: `event = { "Ax", "AxPre", "AxForget", "AxForgetPre", "AxMove", "AxMovePre" }`
   - Not called when functions are used.  `ax() ax_move()`
-* In `AxAudit` check if other *recent* branches have file that doesn't exist.
-  - Use `git reflog`or `@{-1}` to discover recent branches
+* File system monitoring (e.g. inode-watch) of files in oldfiles
+  - See also nvim-tree, which does this.
+* In `AxAudit` check if other *recent* branches have files that don't exist.
+  - Use `git reflog` or `@{-1}` to discover recent branches
   - Emit: `" Exists in branches: develop, main`
   - `git ls-tree --name-only branch-name -- path/to/file`
   - Also current branch, in case the file has been Axed but not committed.
@@ -44,18 +46,21 @@ If anyone requests these, I'll move it up to the top of the file.
 
 ## Missing Functionality
 
-* Implement `move_local_marks()`
 * Command file autocompletion
-* Document functions - `ax([file])` `ax_move(f1, f2)`
+* Document functions - `ax([file])` `ax_move[d](f1, f2)`
 
 ## General Tech debt and Performance
 
-* Use reflection to simplify `M.leak()`.  https://www.lua.org/pil/23.1.1.html
 * Refactor.  `init.lua` is too big.
-* Reduce duplicate code
-* Use `saveas!` to move current buffer
-* Is it inefficient and unnecessary to normalize to full paths with `paths_same()`?
-* For move and Ax <file>, determine if buffer is already loaded
+  - Separate modules for: AxAudit, config/setup (init.lua), remove
+  - Separate unit tests for each module
+  - Remove `_from` from function names
+  - Reduce duplicate code
+  - Use reflection to simplify/remove `M.leak()`.  <https://www.lua.org/pil/23.1.1.html>
+* Performance
+  - Is it inefficient and unnecessary to normalize to full paths with `paths_same()`?
+  - Why `nvim_list_tabpages()` and not `nvim_list_wins()`?
+  - For Ax <file>, determine if buffer is already loaded
 
 ## Testing improvments and validate
 
@@ -64,44 +69,17 @@ If anyone requests these, I'll move it up to the top of the file.
 * Unit tests "given" state should be inverse of final "then" state
 * In `remove_current_buffer()`, `nvim_buf_delete()` is noisy.
 
-## Problematic code
+## Code snippets
 
 This is code that exists that has issues
 or code that may help with an issue.
 It's just here for my reference.
-
-Consider testing a project-local file
-
-```lua
-local function move_local_marks(oldfile, newfile)
-end
-```
 
 ```lua
   before_each(function()
     temp_file_path = 'test/tempfile.txt'
     os.execute('[[ -f ' .. temp_file_path .. ' ]] || touch ' .. temp_file_path)
     os.remove(temp_file_path )
-```
-
-```lua
-function is_buffer_hidden(bufnr)
-  -- Check if the buffer is loaded
-  if not vim.api.nvim_buf_is_loaded(bufnr) then
-    return false
-  end
-
-  -- Iterate over all windows to see if the buffer is visible
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
-    if vim.api.nvim_win_get_buf(win) == bufnr then
-      -- The buffer is visible in a window, so it's not hidden
-      return false
-    end
-  end
-
-  -- If we reached this point, the buffer is loaded but not visible in any window
-  return true
-end
 ```
 
 ```lua
@@ -219,4 +197,21 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
       abuf = bufnr,
     },
   })
+```
+
+```lua
+diff --git a/lua/ax/init.lua b/lua/ax/init.lua
+index ce7553d..16e770a 100644
+--- a/lua/ax/init.lua
++++ b/lua/ax/init.lua
+@@ -277,6 +287,7 @@ local function move_from_quickfix(oldfile, newfile)
+ end
+ 
+ local function remove_from_loclist(file)
++  -- Why nvim_list_tabpages and not nvim_list_wins()?
+   local tabs = vim.api.nvim_list_tabpages()
+   for _, tab in ipairs(tabs) do
+     local windows = vim.api.nvim_tabpage_list_wins(tab)
+@@ -293,6 +304,8 @@ local function remove_from_loclist(file)
+ end
 ```
