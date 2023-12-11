@@ -1,8 +1,12 @@
-ax.nvim is a plugin that aims to manage buffers and files in Neovim. It eases the file and buffer manipulation process in Neovim by providing a series of commands and functions, abstracting user from writing specific Neovim functions.
+# For Neovim
 
----
+## Introduction
 
-# INSTALLATION
+Ax is a Neovim plugin that provides commands to remove files and their traces from Neovim's state. It can also move files and update Neovim's state to reflect the new file location.
+
+## Installation
+
+To install the ax plugin, you can use a package manager like vim-plug or lazy.nvim.
 
 Using vim-plug:
 
@@ -13,69 +17,23 @@ Plug 'mikeslattery/ax.nvim'
 Using lazy.nvim:
 
 ```lua
-{ "mikeslattery/ax.nvim", cmd = { "Ax", "AxForget", "AxMove", "AxAudit" } }
+{ "mikeslattery/ax.nvim", cmd = { "Ax", "AxForget", "AxMove", "AxMoved", "AxAudit" } }
 ```
 
----
+## Commands
 
-# COMMANDS
+Ax provides the following commands:
 
-## Ax
+- `:Ax [file]`: Deletes the file and removes all traces of it from Neovim's state. If no file is provided, it applies to the current buffer.
 
-Ax is a primary command of the ax.nvim plugin and is used to remove a file from the disk and also from various vim lists. It modifies global variables: oldfiles, jumplist and changelist.
+- `:AxForget [file]`: Removes all traces of the file from Neovim's state but does not delete the file. If no file is provided, it applies to the current buffer.
 
-Usage:
+- `:AxMove [oldfile] [newfile]`: Moves the file from oldfile to newfile and updates Neovim's state to reflect the new file location.
 
-```vim
-:Ax
-:Ax {path}
-```
+- `:AxMoved [oldfile] [newfile]`: Updates Neovim's state to reflect that the file has been moved from oldfile to newfile.  This might be used when a move happens externally.
 
-## AxForget
+- `:AxAudit`: Generates a report of files that are remembered by Neovim but no longer exist.
 
-Identical to Ax, but it won't delete an existing file.
+## Configuration
 
-Usage:
-
-```vim
-:AxForget {path}
-```
-
-## AxMove
-
-AxMove is used to move a file to a new location. It also updates various vim lists to reflect the new location of the file.
-
-Usage:
-
-```vim
-:AxMove {source} {destination}
-:AxMove % {destination}
-```
-
-## AxAudit
-
-AxAudit is used to generate a report that lists paths remembered by vim, but no longer exist. It also provides script to clear them.
-
-Usage:
-
-```vim
-:AxAudit
-```
-
----
-
-# MAPPING
-
-Example mappings:
-
-```vim
-nmap <Leader>ax :Ax<CR>
-nmap <Leader>am :AxMove %<space>
-nmap <Leader>aa :AxAudit<CR>
-```
-
----
-
-# COPYRIGHT
-
-© 2023 Mike Slattery. Distributed under the MIT license.
+Ax does not currently have any configuration options.

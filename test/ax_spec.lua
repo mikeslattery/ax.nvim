@@ -183,16 +183,16 @@ describe('ax.nvim', function()
     end
   end)
 
-  it('move_from_oldfiles', function()
+  it('move', function()
     -- given
     local new_file_path = vim.fn.tempname()
-    vim.v.oldfiles = {temp_file_path, "another_file.txt"}
+    vim.cmd.normal('ma')
 
     -- when
-    ax.move_from_oldfiles(temp_file_path, new_file_path)
+    ax.ax_move(temp_file_path, new_file_path)
 
     -- then
-    assert(not vim.tbl_contains(vim.v.oldfiles, temp_file_path), "Old file path should be removed from oldfiles")
-    assert(vim.tbl_contains(vim.v.oldfiles, new_file_path), "New file path should be added to oldfiles")
+    assert(vim.fn.filereadable(new_file_path) == 1, "New file exists")
+    assert(vim.fn.filereadable(temp_file_path) == 0, "Old file not exists")
   end)
 end)

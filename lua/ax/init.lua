@@ -12,6 +12,22 @@ function M.config(user_config)
   return config
 end
 
+-- Execute a shell command quietly, and return true if successful.
+local function execute_quiet(cmdline)
+   local stdout
+   if package.config:sub(1,1) == '\\' then
+     -- This is Windows
+     stdout = 'nul'
+   else
+     stdout = '/dev/null'
+   end
+   return os.execute(cmdline .. ' > ' .. stdout .. ' 2>' .. stdout) == 0
+end
+
+local function is_git_managed(file)
+  return execute_quiet('git ls-files --error-unmatch ' .. file)
+end
+
 local function is_git_managed(file)
   local stdout
   if package.config:sub(1,1) == '\\' then
@@ -27,11 +43,15 @@ local function paths_same(path1, path2)
   return vim.fn.fnamemodify(path1, ':p') == vim.fn.fnamemodify(path2, ':p') 
 end
 
+local function exists(file)
+  return fn.filereadable(file) == 1
+end
+
 local function missing_files()
   local missing_files = {}
   for _, file in ipairs(v.oldfiles) do
     local path = vim.fn.fnamemodify(file, ':p')
-    if fn.filereadable(path) == 0 then
+    if not exists(path) then
       table.insert(missing_files, path)
     end
   end
@@ -90,6 +110,7 @@ function M.audit()
     shada_file = save_shada_to_backup_file()
   end
 
+  table.insert(lines_to_write, '" This audit file')
   table.insert(lines_to_write, 'Ax ' .. temp_file)
   table.insert(lines_to_write, '')
   table.insert(lines_to_write, 'wshada!')
@@ -117,26 +138,9 @@ end
 -- If file is in git, it removes from git as well.
 local function remove_file(file)
   if is_git_managed(file) then
-    os.execute('git rm -f ' .. file .. ' > /dev/null')
+    execute_quiet('git rm -f ' .. file)
   else
     os.remove(file)
-  end
-end
-
--- Moves file.
--- If file is in git, it moves using git.
-local function move_file(oldfile, newfile)
-  if is_git_managed(oldfile) then
-    os.execute('git mv ' .. oldfile .. ' ' .. newfile)
-  else
-    os.rename(oldfile, newfile)
-  end
-end
-
-local function move_buffer(oldfile, newfile)
-  local bufnr = vim.fn.bufnr(oldfile)
-  if bufnr >= 0 then
-    api.nvim_buf_set_name(bufnr, newfile)
   end
 end
 
@@ -146,17 +150,6 @@ local function remove_from_oldfiles(file)
     if paths_same(oldfile, file) then
       table.remove(oldfiles, i)
       vim.cmd('call remove(v:oldfiles, ' .. (i - 1) .. ')')
-      break
-    end
-  end
-end
-
-local function move_from_oldfiles(oldfile, newfile)
-  local oldfiles = v.oldfiles
-  for i, oldfile_path in ipairs(oldfiles) do
-    if paths_same(oldfile_path, oldfile) then
-      oldfiles[i] = newfile
-      vim.cmd('let v:oldfiles[' .. (i - 1) .. '] = "' .. vim.fn.fnameescape(newfile) .. '"')
       break
     end
   end
@@ -175,19 +168,6 @@ local function remove_from_jumplist(file)
   end
 end
 
-local function move_from_jumplist(oldfile, newfile)
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
-    vim.api.nvim_set_current_win(win)
-    local jumplist = fn.getjumplist()[1]
-    for i, jump in ipairs(jumplist) do
-      if paths_same(jump.file, oldfile) then
-        jumplist[i].file = newfile
-        vim.cmd('let getjumplist()[1][' .. (i - 1) .. '].file = ' .. vim.fn.fnameescape(newfile))
-      end
-    end
-  end
-end
-
 local function remove_from_changelist(file)
   for _, win in ipairs(vim.api.nvim_list_wins()) do
     vim.api.nvim_set_current_win(win)
@@ -195,19 +175,6 @@ local function remove_from_changelist(file)
     for i, change in ipairs(changelist) do
       if paths_same(change.filename, file) then
         vim.cmd('call remove(getchangelist()[1], ' .. (i - 1) .. ')')
-      end
-    end
-  end
-end
-
-local function move_from_changelist(oldfile, newfile)
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
-    vim.api.nvim_set_current_win(win)
-    local changelist = fn.getchangelist()[1]
-    for i, change in ipairs(changelist) do
-      if paths_same(change.filename, oldfile) then
-        changelist[i].filename = newfile
-        vim.cmd('let getchangelist()[1][' .. (i - 1) .. '].filename = ' .. vim.fn.fnameescape(newfile))
       end
     end
   end
@@ -244,33 +211,11 @@ local function remove_local_marks(file)
   end
 end
 
-local function move_global_marks(oldfile, newfile)
-  local marks = fn.getmarklist()
-  for i, mark in ipairs(marks) do
-    if paths_same(mark.file, oldfile) then
-      api.nvim_set_mark(string.sub(mark.mark, -1), newfile, mark.pos[1], mark.pos[2])
-    end
-  end
-end
-
-local function move_local_marks(oldfile, newfile)
-end
-
 local function remove_from_quickfix(file)
   local quickfix = fn.getqflist()
   for i, item in ipairs(quickfix) do
     if paths_same(item.filename, file) then
       table.remove(quickfix, i)
-    end
-  end
-  fn.setqflist(quickfix)
-end
-
-local function move_from_quickfix(oldfile, newfile)
-  local quickfix = fn.getqflist()
-  for i, item in ipairs(quickfix) do
-    if paths_same(item.filename, oldfile) then
-      quickfix[i].filename = newfile
     end
   end
   fn.setqflist(quickfix)
@@ -285,22 +230,6 @@ local function remove_from_loclist(file)
       for i, item in ipairs(loclist) do
         if paths_same(item.filename, file) then
           table.remove(loclist, i)
-        end
-      end
-      fn.setloclist(win, loclist)
-    end
-  end
-end
-
-local function move_from_loclist(oldfile, newfile)
-  local tabs = vim.api.nvim_list_tabpages()
-  for _, tab in ipairs(tabs) do
-    local windows = vim.api.nvim_tabpage_list_wins(tab)
-    for _, win in ipairs(windows) do
-      local loclist = fn.getloclist(win)
-      for i, item in ipairs(loclist) do
-        if paths_same(item.filename, oldfile) then
-          loclist[i].filename = newfile
         end
       end
       fn.setloclist(win, loclist)
@@ -342,16 +271,29 @@ function M.ax_forget(file)
   return file
 end
 
+-- File was moved outside of ax or neovim
+function M.ax_moved(oldfile, newfile)
+  if not exists(oldfile) and exists(newfile) then
+    -- This is a kludge, but there's no simple way around it.
+    os.rename(newfile, oldfile)
+    M.ax_move(oldfile, newfile)
+  end
+end
+
 function M.ax_move(oldfile, newfile)
-  move_file(oldfile, newfile)
-  move_buffer(oldfile, newfile)
-  move_from_oldfiles(oldfile, newfile)
-  move_from_jumplist(oldfile, newfile)
-  move_from_changelist(oldfile, newfile)
-  move_global_marks(oldfile, newfile)
-  move_local_marks(oldfile, newfile)
-  move_from_quickfix(oldfile, newfile)
-  move_from_loclist(oldfile, newfile)
+  if exists(oldfile) then
+    local bufnr = vim.fn.bufnr(oldfile)
+    if bufnr >= 0 then
+      vim.cmd.b(bufnr)
+      vim.cmd.saveas(newfile)
+      vim.cmd('b#')
+    else
+      vim.cmd.edit(oldfile)
+      vim.cmd.saveas(newfile)
+      vim.cmd.bdelete()
+    end
+    M.ax(oldfile)
+  end
 end
 
 function M.setup(setup_config)
@@ -381,6 +323,14 @@ function M.setup(setup_config)
     end
   end, { nargs = "*" })
 
+  vim.api.nvim_create_user_command('AxMoved', function(args)
+    if #args.fargs == 2 then
+      M.ax_moved(args.fargs[1], args.fargs[2])
+    else
+      print("AxMoved requires exactly 2 arguments")
+    end
+  end, { nargs = "*" })
+
   vim.api.nvim_create_user_command('AxAudit', function(args)
     M.audit()
   end, { nargs = "*" })
@@ -401,16 +351,6 @@ function M.leak()
   M.remove_local_marks = remove_local_marks
   M.remove_from_quickfix = remove_from_quickfix
   M.remove_from_loclist = remove_from_loclist
-  M.move_file = move_file
-  M.move_from_oldfiles = move_from_oldfiles
-  M.move_from_jumplist = move_from_jumplist
-  M.move_from_changelist = move_from_changelist
-  M.move_global_marks = move_global_marks
-  M.move_local_marks = move_local_marks
-  M.move_from_quickfix = move_from_quickfix
-  M.move_from_loclist = move_from_loclist
-  M.move_file = move_file
-  M.move_buffer = move_buffer
   return M
 end
 
