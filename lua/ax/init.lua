@@ -282,8 +282,11 @@ end
 
 function M.ax_move(oldfile, newfile)
   if exists(oldfile) then
+    local current_bufnr = vim.api.nvim_get_current_buf()
     local bufnr = vim.fn.bufnr(oldfile)
-    if bufnr >= 0 then
+    if bufnr == current_bufnr and bufnr >= 0 then
+      vim.cmd.saveas(newfile)
+    elseif bufnr >= 0 then
       vim.cmd.b(bufnr)
       vim.cmd.saveas(newfile)
       vim.cmd('b#')
