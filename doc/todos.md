@@ -27,6 +27,7 @@ If anyone requests these, I'll move it up to the top of the file.
   - See lazy.nvim for example code.  Find `nvim_exec_autocmds`
   - lazy config: `event = { "Ax", "AxPre", "AxForget", "AxForgetPre", "AxMove", "AxMovePre" }`
   - Not called when functions are used.  `ax() ax_move()`
+* Save state before every delete.  Some way to selectively restore.
 * File system monitoring (e.g. inode-watch) of files in oldfiles
   - See also nvim-tree, which does this.
 * In `AxAudit` check if other *recent* branches have files that don't exist.
