@@ -51,7 +51,7 @@ local function missing_files()
   local missing_files = {}
   for _, file in ipairs(v.oldfiles) do
     local path = vim.fn.fnamemodify(file, ':p')
-    if not exists(path) then
+    if not exists(path) and fn.isdirectory(file) == 0 then
       table.insert(missing_files, path)
     end
   end
@@ -84,13 +84,18 @@ local function save_shada_to_backup_file()
   vim.fn.mkdir(backup_dir, "p")
   local date = get_date()
   local backup_file_name = get_next_backup_file_name(backup_dir, date)
-  vim.api.nvim_command('wshada ' .. backup_file_name)
 
   return backup_file_name
 end
 
 function M.audit()
   local missing_files = missing_files()
+
+  if #missing_files == 0 then
+    print("No forgotten files to Ax.")
+    return
+  end
+
   local temp_file = fn.tempname() .. ".vim"
 
   local lines_to_write = {
@@ -98,28 +103,24 @@ function M.audit()
     '',
     '" These paths are remembered but no longer exist.',
     '" To clear them run:',
-    '" :source %',
+    '" :so %',
     ''
   }
 
+  local shada_file = save_shada_to_backup_file()
+  table.insert(lines_to_write, '" Backup state before forgetting files')
+  table.insert(lines_to_write, 'wshada ' .. shada_file)
+  table.insert(lines_to_write, '')
+
+  table.insert(lines_to_write, '" Files in history that no longer exist')
   for _, file in ipairs(missing_files) do
     table.insert(lines_to_write, 'Ax ' .. file)
-  end
-  local shada_file
-  if #missing_files > 0 then
-    shada_file = save_shada_to_backup_file()
   end
 
   table.insert(lines_to_write, '" This audit file')
   table.insert(lines_to_write, 'Ax ' .. temp_file)
   table.insert(lines_to_write, '')
   table.insert(lines_to_write, 'wshada!')
-
-  if shada_file then
-    table.insert(lines_to_write, '')
-    table.insert(lines_to_write, '" State was backed up and can be restored with:')
-    table.insert(lines_to_write, '" :rshada ' .. shada_file)
-  end
 
   vim.fn.writefile(lines_to_write, temp_file)
 
